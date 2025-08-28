@@ -163,12 +163,8 @@ tmp/
 ehthumbs.db
 Thumbs.db
 
-# Project specific - exclude generated outputs but keep structure
-outputs/
-reports/
-benchmarks/*/output_*
+# Project specific - keep sample outputs for demonstration
 benchmarks/*/raw_results.json
-benchmarks/*/performance_charts.png
 
 # Keep important documentation and sample files
 !env.example
