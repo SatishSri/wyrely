@@ -8,12 +8,262 @@ import os
 import sys
 from datetime import datetime
 from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor, black, white, grey
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from reportlab.graphics.shapes import Drawing, Rect, String, Circle
+from reportlab.graphics.widgetbase import Widget
+from reportlab.graphics import renderPDF
+from reportlab.platypus.flowables import Flowable
 import re
+
+class ArchitectureDiagram(Flowable):
+    """Custom flowable for architecture diagrams."""
+    
+    def __init__(self, diagram_type="current", width=6*inch, height=4*inch):
+        self.diagram_type = diagram_type
+        self.width = width
+        self.height = height
+    
+    def wrap(self, availWidth, availHeight):
+        return self.width, self.height
+    
+    def draw(self):
+        if self.diagram_type == "current":
+            self._draw_current_architecture()
+        elif self.diagram_type == "celery":
+            self._draw_celery_architecture()
+        elif self.diagram_type == "enterprise":
+            self._draw_enterprise_architecture()
+    
+    def _draw_current_architecture(self):
+        """Draw current parallel processing architecture."""
+        canvas = self.canv
+        
+        # Title
+        canvas.setFont("Helvetica-Bold", 12)
+        canvas.drawString(inch, self.height - 0.3*inch, "Current Architecture: Parallel Processing")
+        
+        # Main container
+        canvas.setStrokeColor(HexColor('#2e75b6'))
+        canvas.setFillColor(HexColor('#e8f4fd'))
+        canvas.rect(0.5*inch, 0.5*inch, 5*inch, 3*inch, fill=1, stroke=1)
+        
+        # User Interface
+        canvas.setFillColor(HexColor('#4472c4'))
+        canvas.rect(1*inch, 3*inch, 1.5*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.setFont("Helvetica", 10)
+        canvas.drawString(1.1*inch, 3.15*inch, "demo.py (CLI)")
+        
+        # Processing Engine
+        canvas.setFillColor(HexColor('#ff9ff3'))
+        canvas.rect(3*inch, 2.2*inch, 2*inch, 1*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.drawString(3.1*inch, 2.9*inch, "ThreadPoolExecutor")
+        canvas.drawString(3.1*inch, 2.7*inch, "(5 workers)")
+        canvas.drawString(3.1*inch, 2.5*inch, "Document AI API")
+        canvas.drawString(3.1*inch, 2.3*inch, "Result aggregation")
+        
+        # Storage
+        canvas.setFillColor(HexColor('#54a0ff'))
+        canvas.rect(1*inch, 1*inch, 1.5*inch, 0.8*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.drawString(1.1*inch, 1.5*inch, "Local Storage")
+        canvas.drawString(1.1*inch, 1.3*inch, "inputs/outputs/")
+        canvas.drawString(1.1*inch, 1.1*inch, "reports/")
+        
+        # Performance box
+        canvas.setFillColor(HexColor('#feca57'))
+        canvas.rect(3*inch, 0.8*inch, 2*inch, 0.6*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.drawString(3.1*inch, 1.2*inch, "6.36x speedup")
+        canvas.drawString(3.1*inch, 1.0*inch, "2.75 files/second")
+        
+        # Arrows
+        canvas.setStrokeColor(black)
+        canvas.setLineWidth(2)
+        # UI to Processing
+        canvas.line(1.75*inch, 3*inch, 3*inch, 2.7*inch)
+        # Processing to Storage
+        canvas.line(3*inch, 2.2*inch, 2.5*inch, 1.8*inch)
+        # Processing to Performance
+        canvas.line(4*inch, 2.2*inch, 4*inch, 1.4*inch)
+    
+    def _draw_celery_architecture(self):
+        """Draw Celery-based distributed architecture."""
+        canvas = self.canv
+        
+        # Title
+        canvas.setFont("Helvetica-Bold", 12)
+        canvas.drawString(inch, self.height - 0.3*inch, "Celery Architecture for Document AI Processing")
+        
+        # Web API
+        canvas.setFillColor(HexColor('#4472c4'))
+        canvas.rect(0.5*inch, 3*inch, 1.2*inch, 0.5*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.setFont("Helvetica", 9)
+        canvas.drawString(0.6*inch, 3.3*inch, "Web API")
+        canvas.drawString(0.6*inch, 3.1*inch, "(FastAPI)")
+        
+        # Celery Producer
+        canvas.setFillColor(HexColor('#2e75b6'))
+        canvas.rect(2*inch, 3*inch, 1.2*inch, 0.5*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.drawString(2.1*inch, 3.3*inch, "Celery")
+        canvas.drawString(2.1*inch, 3.1*inch, "Producer")
+        
+        # Message Broker (highlighted)
+        canvas.setFillColor(HexColor('#ff9ff3'))
+        canvas.rect(3.8*inch, 3*inch, 1.5*inch, 0.5*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.drawString(3.9*inch, 3.3*inch, "Message Broker")
+        canvas.drawString(3.9*inch, 3.1*inch, "(Redis/RabbitMQ)")
+        
+        # Workers
+        worker_positions = [(1*inch, 2*inch), (2.5*inch, 2*inch), (4*inch, 2*inch)]
+        for i, (x, y) in enumerate(worker_positions):
+            canvas.setFillColor(HexColor('#54a0ff'))
+            canvas.rect(x, y, 1.2*inch, 0.5*inch, fill=1, stroke=1)
+            canvas.setFillColor(white)
+            canvas.drawString(x + 0.1*inch, y + 0.3*inch, f"Worker {i+1}")
+            canvas.drawString(x + 0.1*inch, y + 0.1*inch, f"(Pod {i+1})")
+        
+        # Document AI API
+        canvas.setFillColor(HexColor('#feca57'))
+        canvas.rect(2*inch, 1*inch, 2*inch, 0.5*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.drawString(2.1*inch, 1.3*inch, "Google Document AI API")
+        canvas.drawString(2.1*inch, 1.1*inch, "(Shared Resource)")
+        
+        # Result Backend
+        canvas.setFillColor(HexColor('#54a0ff'))
+        canvas.rect(4.5*inch, 1*inch, 1.5*inch, 0.5*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.drawString(4.6*inch, 1.3*inch, "Result Backend")
+        canvas.drawString(4.6*inch, 1.1*inch, "(Redis/Database)")
+        
+        # Monitoring
+        canvas.setFillColor(HexColor('#00d2d3'))
+        canvas.rect(0.5*inch, 0.5*inch, 1.2*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.drawString(0.6*inch, 0.75*inch, "Celery Flower")
+        canvas.drawString(0.6*inch, 0.55*inch, "(Monitoring)")
+        
+        # Scheduler
+        canvas.setFillColor(HexColor('#2e75b6'))
+        canvas.rect(2*inch, 0.5*inch, 1.2*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.drawString(2.1*inch, 0.75*inch, "Celery Beat")
+        canvas.drawString(2.1*inch, 0.55*inch, "(Scheduler)")
+        
+        # Arrows
+        canvas.setStrokeColor(black)
+        canvas.setLineWidth(1.5)
+        # API to Producer
+        canvas.line(1.7*inch, 3.25*inch, 2*inch, 3.25*inch)
+        # Producer to Broker
+        canvas.line(3.2*inch, 3.25*inch, 3.8*inch, 3.25*inch)
+        # Broker to Workers
+        for x, y in worker_positions:
+            canvas.line(4.5*inch, 3*inch, x + 0.6*inch, y + 0.5*inch)
+        # Workers to Document AI
+        for x, y in worker_positions:
+            canvas.line(x + 0.6*inch, y, 3*inch, 1.5*inch)
+        # Workers to Result Backend
+        for x, y in worker_positions:
+            canvas.line(x + 1.2*inch, y + 0.25*inch, 4.5*inch, 1.25*inch)
+        # Scheduler to Broker
+        canvas.line(2.6*inch, 0.9*inch, 4.5*inch, 3*inch)
+    
+    def _draw_enterprise_architecture(self):
+        """Draw enterprise Kubernetes architecture."""
+        canvas = self.canv
+        
+        # Title
+        canvas.setFont("Helvetica-Bold", 12)
+        canvas.drawString(0.5*inch, self.height - 0.3*inch, "Enterprise Kubernetes Architecture")
+        
+        # Load Balancer
+        canvas.setFillColor(HexColor('#ff9800'))
+        canvas.rect(2.5*inch, 3.5*inch, 1.5*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.setFont("Helvetica", 9)
+        canvas.drawString(2.6*inch, 3.65*inch, "Global Load Balancer")
+        
+        # Kubernetes Cluster Box
+        canvas.setStrokeColor(HexColor('#2e75b6'))
+        canvas.setFillColor(HexColor('#f0f8ff'))
+        canvas.rect(0.5*inch, 1.5*inch, 5*inch, 1.8*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.setFont("Helvetica-Bold", 10)
+        canvas.drawString(0.6*inch, 3.1*inch, "Kubernetes Processing Cluster")
+        
+        # Worker Pods
+        pod_positions = [(0.8*inch, 2.5*inch), (2*inch, 2.5*inch), (3.2*inch, 2.5*inch), (4.4*inch, 2.5*inch)]
+        for i, (x, y) in enumerate(pod_positions):
+            canvas.setFillColor(HexColor('#e1f5fe'))
+            canvas.rect(x, y, 0.8*inch, 0.4*inch, fill=1, stroke=1)
+            canvas.setFillColor(black)
+            canvas.setFont("Helvetica", 8)
+            canvas.drawString(x + 0.05*inch, y + 0.25*inch, f"Worker Pod {i+1}")
+            canvas.drawString(x + 0.05*inch, y + 0.1*inch, "Celery + Doc AI")
+        
+        # Message Queue
+        canvas.setFillColor(HexColor('#ff9ff3'))
+        canvas.rect(1*inch, 1.8*inch, 1.5*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.drawString(1.1*inch, 2.05*inch, "Redis Cluster")
+        canvas.drawString(1.1*inch, 1.9*inch, "(Message Queue)")
+        
+        # Services
+        canvas.setFillColor(HexColor('#4caf50'))
+        canvas.rect(3*inch, 1.8*inch, 1.2*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(white)
+        canvas.drawString(3.1*inch, 2.05*inch, "PDF Generator")
+        canvas.drawString(3.1*inch, 1.9*inch, "Service")
+        
+        # Storage Layer
+        canvas.setStrokeColor(HexColor('#666666'))
+        canvas.setFillColor(HexColor('#f8f9fa'))
+        canvas.rect(0.5*inch, 0.8*inch, 5*inch, 0.6*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.setFont("Helvetica-Bold", 9)
+        canvas.drawString(0.6*inch, 1.25*inch, "Distributed Storage Layer")
+        
+        storage_items = [
+            ("Google Cloud Storage", 1*inch, 0.95*inch),
+            ("PostgreSQL", 2.5*inch, 0.95*inch),
+            ("Redis Cache", 4*inch, 0.95*inch)
+        ]
+        
+        for name, x, y in storage_items:
+            canvas.setFillColor(HexColor('#54a0ff'))
+            canvas.rect(x, y, 1.2*inch, 0.25*inch, fill=1, stroke=1)
+            canvas.setFillColor(white)
+            canvas.setFont("Helvetica", 8)
+            canvas.drawString(x + 0.05*inch, y + 0.08*inch, name)
+        
+        # Performance metrics
+        canvas.setFillColor(HexColor('#feca57'))
+        canvas.rect(4.5*inch, 2.5*inch, 1*inch, 0.4*inch, fill=1, stroke=1)
+        canvas.setFillColor(black)
+        canvas.drawString(4.6*inch, 2.75*inch, "1,000+")
+        canvas.drawString(4.6*inch, 2.6*inch, "docs/hour")
+        canvas.drawString(4.6*inch, 2.45*inch, "99.9% uptime")
+        
+        # Arrows
+        canvas.setStrokeColor(black)
+        canvas.setLineWidth(1.5)
+        # Load balancer to cluster
+        canvas.line(3.25*inch, 3.5*inch, 3.25*inch, 3.3*inch)
+        # Queue to workers
+        for x, y in pod_positions[:2]:
+            canvas.line(1.75*inch, 2.2*inch, x + 0.4*inch, y)
+        # Workers to storage
+        canvas.line(2.5*inch, 2.5*inch, 2.5*inch, 1.4*inch)
 
 class TechnicalArchitectPDFGenerator:
     def __init__(self):
@@ -294,7 +544,7 @@ class TechnicalArchitectPDFGenerator:
                                 story.append(Paragraph(para, self.styles['Normal']))
                             story.append(Spacer(1, 6))
             
-            # Add special tables at appropriate sections
+            # Add special tables and diagrams at appropriate sections
             if element_type == 'text' and 'Performance Results Achieved' in element_content:
                 story.append(Spacer(1, 10))
                 story.append(self._create_performance_table())
@@ -303,6 +553,22 @@ class TechnicalArchitectPDFGenerator:
             if element_type == 'text' and 'Scaling Projections' in element_content:
                 story.append(Spacer(1, 10))
                 story.append(self._create_scaling_table())
+                story.append(Spacer(1, 15))
+                
+            # Add architecture diagrams at appropriate sections
+            if element_type == 'text' and 'Current Implementation: Parallel Processing' in element_content:
+                story.append(Spacer(1, 15))
+                story.append(ArchitectureDiagram("current", width=6*inch, height=4*inch))
+                story.append(Spacer(1, 15))
+                
+            if element_type == 'section' and 'Celery-Based Distributed Processing' in element_content:
+                story.append(Spacer(1, 15))
+                story.append(ArchitectureDiagram("celery", width=6*inch, height=4.5*inch))
+                story.append(Spacer(1, 15))
+                
+            if element_type == 'text' and 'Enterprise Distributed Cluster' in element_content:
+                story.append(Spacer(1, 15))
+                story.append(ArchitectureDiagram("enterprise", width=6*inch, height=4.5*inch))
                 story.append(Spacer(1, 15))
         
         # Add footer information
