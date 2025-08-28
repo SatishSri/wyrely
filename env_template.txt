@@ -1,0 +1,14 @@
+# Google Cloud Configuration for Document AI Table Extractor
+# Copy this file to .env and fill in your actual values
+
+# Path to your Google Cloud service account JSON key file
+# Download this from Google Cloud Console > IAM & Admin > Service Accounts > Keys
+GOOGLE_APPLICATION_CREDENTIALS=./your-service-account-key.json
+
+# Your Google Cloud Project ID
+# Find this in Google Cloud Console > Dashboard
+PROJECT_ID=your-google-cloud-project-id
+
+# Document AI processor location (us, eu, or asia1)
+# Use 'us' for United States (most common)
+LOCATION=us

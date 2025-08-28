@@ -1,0 +1,24 @@
+# PDF Output File Order Configuration
+# 
+# This file defines the order in which extracted files should appear in the PDF report.
+# - Lines starting with # are comments
+# - Empty lines are ignored
+# - Files are processed in the order listed
+# - Use the base filename without _extracted.txt suffix
+# - Files not listed here will be appended at the end in alphabetical order
+
+# Priority files first
+Sheets
+project_data
+
+# Finish schedule files in logical order
+finish_schedule_acoustical_panel_ceiling
+finish_schedule_applied_window_film
+finish_schedule_Architecural_Millwork
+finish_schedule_concrete
+finish_schedule_decorative_formed_metals
+finish_schedule_glazing
+finish_schedule_resilient_base_and_accessories
+finish_schedule_tiling
+finish_schedule_wood_flooring
+finish_schedule_wood_panelling
