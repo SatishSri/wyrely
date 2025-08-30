@@ -1,0 +1,121 @@
+graph TD
+    %% Define Styles for different node types
+    classDef service fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000;
+    classDef managed fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#000;
+    classDef queue fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000;
+    classDef database fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000;
+    classDef external fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#000;
+    classDef performance fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000;
+    classDef cache fill:#e0f2f1,stroke:#00796b,stroke-width:2px,color:#000;
+
+    %% Performance Metrics Box
+    subgraph PM[" 📊 PERFORMANCE METRICS "]
+        P1["🚀 Throughput: 1000-1300 docs/hour<br/>⏱️ Processing Time: 25-30 seconds (100-page doc)<br/>💰 Cost: $3.00 per document<br/>🎯 Reliability: 99.9% uptime"]
+    end
+
+    %% Layer 1: Ingestion & Pre-processing
+    subgraph L1[" 🔄 LAYER 1: INGESTION & PRE-PROCESSING<br/>Throughput: 1000 docs/min | Latency: 100-500ms "]
+        User([👤 User/Client<br/>Construction Companies]) --> API_Gateway[🌐 Managed API Gateway<br/>Rate Limiting: 1000 req/min<br/>Auth & Validation];
+        API_Gateway --> LB[⚖️ Load Balancer<br/>Auto-scaling: 3-50 instances];
+        LB --> Ingestion_Service(📥 Document Ingestion Service<br/>Docker: 200MB image<br/>CPU: 2 cores, RAM: 4GB);
+        Ingestion_Service --> Raw_Storage[🗄️ Raw Document Storage<br/>S3/GCS with versioning<br/>99.999% durability];
+        Raw_Storage -.->|S3/GCS Event Trigger<br/>Near real-time| Preprocessing_Service(🔧 Document Splitting &<br/>Layout Analysis Service<br/>Intelligent chunking: 10-15 pages<br/>CPU: 4 cores, RAM: 8GB);
+        Preprocessing_Service --> Processing_Queue[📨 Processing Queue<br/>Kafka: 1M+ msg/sec<br/>Partitions: 20, Replicas: 3];
+    end
+
+    %% Caching Layer
+    subgraph CL[" 🔄 INTELLIGENT CACHING LAYER<br/>Cache Hit Rate: 60% | Response Time: <1ms "]
+        Cache_Redis[⚡ Redis Cluster<br/>Memory: 64GB<br/>6 nodes, 3 masters<br/>Content similarity detection]
+        Cache_Results[📊 Cached Results DB<br/>MongoDB<br/>Recent processing results]
+    end
+
+    %% Layer 2: Specialized Processing
+    subgraph L2[" ⚙️ LAYER 2: SPECIALIZED PROCESSING<br/>Throughput: 500 workers | Latency: 2-8 sec/chunk "]
+        Processing_Queue --> Route_Logic{🧠 Smart Routing Logic<br/>Content type detection<br/>Cost optimization};
+        Route_Logic -->|Text Heavy Documents| Text_Worker_Pool[📝 Text/Table Processing Workers<br/>Pool: 10-300 instances<br/>CPU optimized: 2-4 cores each];
+        Route_Logic -->|Image Heavy Documents| Image_Worker_Pool[🖼️ Image/Diagram Processing Workers<br/>Pool: 5-100 instances<br/>GPU optimized: 1 GPU + 8 cores each];
+        
+        Text_Worker_Pool --> Multi_Provider{🔀 Multi-Cloud Provider Router<br/>Cost & performance optimization};
+        Image_Worker_Pool --> Multi_Provider;
+        
+        Multi_Provider -->|Tables & Forms| DocAI_Forms[🔷 Google Document AI<br/>Form/Table Parser<br/>$0.02 per page<br/>Accuracy: 95%+];
+        Multi_Provider -->|Images & Diagrams| DocAI_Vision[👁️ Google Vision API<br/>OCR + Object Detection<br/>$0.015 per image<br/>Accuracy: 92%+];
+        Multi_Provider -->|Alternative Provider| Azure_Doc[🔶 Azure Document Intelligence<br/>Backup provider<br/>$0.025 per page];
+        Multi_Provider -->|Cost Optimized| AWS_Textract[🟠 AWS Textract<br/>Budget option<br/>$0.018 per page];
+    end
+
+    %% Layer 3: LLM Enhancement
+    subgraph L3[" 🤖 LAYER 3: LLM ENHANCEMENT<br/>Throughput: 200 chunks/min | Latency: 3-15 sec/chunk "]
+        DocAI_Forms --> Cache_Check{📋 Cache Lookup<br/>Content similarity: 85%+};
+        DocAI_Vision --> Cache_Check;
+        Azure_Doc --> Cache_Check;
+        AWS_Textract --> Cache_Check;
+        
+        Cache_Check -->|Cache Hit: 60%| Cache_Redis;
+        Cache_Check -->|Cache Miss: 40%| LLM_Service(🧠 LLM Summarization Service<br/>Auto-scaling: 3-50 instances<br/>GPU: NVIDIA A100<br/>Memory: 32GB per instance);
+        
+        Cache_Redis --> Direct_Results[⚡ Skip LLM Processing<br/>Instant response];
+        LLM_Service --> LLM_Router{🔄 LLM Provider Router<br/>Load balancing & cost optimization};
+        
+        LLM_Router -->|Primary| OpenAI_API[🔵 OpenAI GPT-4<br/>High quality summaries<br/>$0.03 per 1K tokens];
+        LLM_Router -->|Alternative| Vertex_AI[🔷 Google Vertex AI<br/>PaLM 2 model<br/>$0.025 per 1K tokens];
+        LLM_Router -->|Cost Optimized| Claude_API[🟣 Anthropic Claude<br/>Construction-tuned<br/>$0.02 per 1K tokens];
+        
+        OpenAI_API --> Cache_Store[💾 Store in Cache<br/>TTL: 24 hours];
+        Vertex_AI --> Cache_Store;
+        Claude_API --> Cache_Store;
+        Cache_Store --> Cache_Results;
+    end
+
+    %% Layer 4: Aggregation & Output
+    subgraph L4[" 📊 LAYER 4: AGGREGATION & OUTPUT<br/>Throughput: 50 reports/min | Latency: 5-30 seconds "]
+        Direct_Results --> Results_DB[🗃️ Structured Results Database<br/>PostgreSQL cluster<br/>3 nodes, read replicas<br/>SSD storage: 1TB];
+        Cache_Store --> Results_DB;
+        
+        Results_DB --> Status_Monitor{📈 Processing Status Monitor<br/>Real-time progress tracking};
+        Status_Monitor -->|All Chunks Complete| Aggregation_Service(🔗 Results Aggregation Service<br/>Intelligent merging algorithm<br/>Conflict resolution<br/>CPU: 6 cores, RAM: 16GB);
+        
+        Aggregation_Service --> Quality_Check{✅ Quality Validation<br/>AI-powered accuracy check<br/>Construction domain rules};
+        Quality_Check -->|Pass: 95%+| Report_Service(📄 Final Report Generation<br/>Dynamic PDF creation<br/>Contractor-friendly format<br/>CPU: 4 cores, RAM: 8GB);
+        Quality_Check -->|Fail: <95%| Manual_Review[👨‍💼 Manual Review Queue<br/>Human validation<br/>Continuous improvement];
+        
+        Report_Service --> Final_Report([📋 Final Summary Report<br/>PDF/HTML/JSON formats<br/>Delivery: Email/API/Portal]);
+        Manual_Review --> Report_Service;
+    end
+
+    %% Monitoring & Operations
+    subgraph MON[" 📊 MONITORING & OPERATIONS "]
+        Prometheus[📈 Prometheus<br/>Metrics collection<br/>Custom business metrics];
+        Grafana[📊 Grafana<br/>Real-time dashboards<br/>SLA monitoring];
+        AlertManager[🚨 Alert Manager<br/>PagerDuty integration<br/>Predictive alerts];
+        
+        Prometheus --> Grafana;
+        Prometheus --> AlertManager;
+    end
+
+    %% Dead Letter Queue & Error Handling
+    subgraph ERR[" ⚠️ ERROR HANDLING & RESILIENCE "]
+        DLQ[💀 Dead Letter Queue<br/>Failed document processing<br/>Manual intervention];
+        Circuit_Breaker[🔌 Circuit Breaker<br/>API failure protection<br/>Auto-recovery];
+        Retry_Logic[🔄 Exponential Backoff<br/>3 attempts: 1s, 4s, 16s<br/>Jitter for load distribution];
+    end
+
+    %% Connect monitoring
+    L1 -.-> Prometheus;
+    L2 -.-> Prometheus;
+    L3 -.-> Prometheus;
+    L4 -.-> Prometheus;
+
+    %% Connect error handling
+    LLM_Service -.-> DLQ;
+    Multi_Provider -.-> Circuit_Breaker;
+    Processing_Queue -.-> Retry_Logic;
+
+    %% Apply Styles
+    class User,API_Gateway,LB,Ingestion_Service,Preprocessing_Service,Text_Worker_Pool,Image_Worker_Pool,LLM_Service,Aggregation_Service,Report_Service,Final_Report,Manual_Review service;
+    class Raw_Storage,Processing_Queue,Results_DB,API_Gateway,Cache_Results managed;
+    class DocAI_Forms,DocAI_Vision,Azure_Doc,AWS_Textract,OpenAI_API,Vertex_AI,Claude_API external;
+    class Route_Logic,Multi_Provider,Cache_Check,LLM_Router,Status_Monitor,Quality_Check queue;
+    class Cache_Redis,Cache_Store,Direct_Results cache;
+    class P1,PM performance;
+    class DLQ,Circuit_Breaker,Retry_Logic external;
